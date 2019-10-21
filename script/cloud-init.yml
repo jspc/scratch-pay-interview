@@ -47,7 +47,7 @@ write_files:
     After=docker-network.service
 
     [Service]
-    ExecStartPre=/usr/bin/docker create --log-driver=gcplogs --log-opt gcp-log-cmd=true --network scratch-pay --name nginx -p 0.0.0.0:3333:8080 jspc/echo-server
+    ExecStartPre=/usr/bin/docker create --log-driver=gcplogs --log-opt gcp-log-cmd=true --network scratch-pay --name nginx -p 0.0.0.0:3333:8080 jspc/nginx
     ExecStart=/usr/bin/docker start --attach nginx
     ExecStop=/usr/bin/docker stop nginx
     ExecStopPost=/usr/bin/docker rm nginx
