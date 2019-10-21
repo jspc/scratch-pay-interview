@@ -1,0 +1,67 @@
+#cloud-config
+
+users:
+- name: cloudservice
+  uid: 2000
+
+write_files:
+- path: /etc/systemd/system/docker-network.service
+  permissions: 0644
+  owner: root
+  content: |
+    [Unit]
+    Description=Create Docker Network
+
+    [Service]
+    Type=oneshot
+    RemainAfterExit=true
+    ExecStart=/usr/bin/docker network create scratch-pay
+    ExecStop=/usr/bin/docker network rm scratch-pay
+
+    [Install]
+    WantedBy=multi-user.target
+
+- path: /etc/systemd/system/docker-app.service
+  permissions: 0644
+  owner: root
+  content: |
+    [Unit]
+    Description=Run App Container
+    After=docker-network.service
+
+    [Service]
+    ExecStartPre=/usr/bin/docker create --log-driver=gcplogs --log-opt gcp-log-cmd=true --network scratch-pay --name app jspc/echo-server
+    ExecStart=/usr/bin/docker start --attach app
+    ExecStop=/usr/bin/docker stop app
+    ExecStopPost=/usr/bin/docker rm app
+
+    [Install]
+    WantedBy=multi-user.target
+
+- path: /etc/systemd/system/docker-nginx.service
+  permissions: 0644
+  owner: root
+  content: |
+    [Unit]
+    Description=Run nginx Container
+    After=docker-network.service
+
+    [Service]
+    ExecStartPre=/usr/bin/docker create --log-driver=gcplogs --log-opt gcp-log-cmd=true --network scratch-pay --name nginx -p 0.0.0.0:3333:8080 jspc/echo-server
+    ExecStart=/usr/bin/docker start --attach nginx
+    ExecStop=/usr/bin/docker stop nginx
+    ExecStopPost=/usr/bin/docker rm nginx
+
+    [Install]
+    WantedBy=multi-user.target
+
+
+runcmd:
+- systemctl daemon-reload
+- systemctl start docker-network.service
+- systemctl start docker-app.service
+- systemctl start docker-nginx.service
+
+# bootcmd:
+# - systemctl stop sshd
+# - systemctl disable sshd
