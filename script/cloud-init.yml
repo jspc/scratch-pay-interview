@@ -62,6 +62,6 @@ runcmd:
 - systemctl start docker-app.service
 - systemctl start docker-nginx.service
 
-# bootcmd:
-# - systemctl stop sshd
-# - systemctl disable sshd
+bootcmd:
+- systemctl stop sshd
+- systemctl disable sshd
